@@ -1,0 +1,161 @@
+{
+    "name": "dlp-pipeline",
+    "description": "dlp-pipeline",
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "6.6.0",
+        "scope": "SYSTEM"
+    },
+    "config": {
+        "resources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "GCS",
+                "to": "Redact"
+            },
+            {
+                "from": "Redact",
+                "to": "GCS2"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "properties": {},
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": false,
+        "stages": [
+            {
+                "name": "GCS",
+                "plugin": {
+                    "name": "GCSFile",
+                    "type": "batchsource",
+                    "label": "GCS",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.19.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "useConnection": "false",
+                        "project": "auto-detect",
+                        "serviceAccountType": "filePath",
+                        "serviceFilePath": "auto-detect",
+                        "referenceName": "gcs-data",
+                        "path": "gs://cloud-training/OCBL167/SampleRecords.csv",
+                        "format": "csv",
+                        "sampleSize": "1000",
+                        "skipHeader": "false",
+                        "filenameOnly": "false",
+                        "recursive": "false",
+                        "encrypted": "false",
+                        "fileEncoding": "UTF-8",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body_0\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_1\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_2\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_3\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_4\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body_0\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_1\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_2\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_3\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_4\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "id": "GCS",
+                "type": "batchsource",
+                "label": "GCS",
+                "icon": "fa-plug"
+            },
+            {
+                "name": "Redact",
+                "plugin": {
+                    "name": "SensitiveRecordRedaction",
+                    "type": "transform",
+                    "label": "Redact",
+                    "artifact": {
+                        "name": "dlp",
+                        "version": "1.2.2",
+                        "scope": "USER"
+                    },
+                    "properties": {
+                        "customTemplateEnabled": "true",
+                        "fieldsToTransform": "[\"{\\\"fields\\\":\\\"body_4\\\",\\\"transform\\\":\\\"MASKING\\\",\\\"filters\\\":\\\"NONE\\\",\\\"transformProperties\\\":{\\\"maskingChar\\\":\\\"#\\\",\\\"numberToMask\\\":\\\"0\\\",\\\"reverseOrder\\\":\\\"false\\\",\\\"charsToIgnoreEnum\\\":\\\"COMMON_CHARS_TO_IGNORE_UNSPECIFIED\\\"}}\"]",
+                        "serviceFilePath": "auto-detect",
+                        "project": "auto-detect",
+                        "templateId": "dlp-template-01"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body_0\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_1\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_2\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_3\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_4\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "GCS",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body_0\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_1\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_2\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_3\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_4\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "id": "Redact",
+                "type": "transform",
+                "label": "Redact",
+                "icon": "fa-plug"
+            },
+            {
+                "name": "GCS2",
+                "plugin": {
+                    "name": "GCS",
+                    "type": "batchsink",
+                    "label": "GCS2",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.19.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "referenceName": "gcs-sink",
+                        "project": "auto-detect",
+                        "path": "gs://dfusion-20220802-2/",
+                        "suffix": "yyyy-MM-dd-HH-mm",
+                        "format": "csv",
+                        "serviceAccountType": "filePath",
+                        "serviceFilePath": "auto-detect",
+                        "location": "us",
+                        "contentType": "application/octet-stream",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body_0\",\"type\":\"string\"},{\"name\":\"body_1\",\"type\":\"string\"},{\"name\":\"body_2\",\"type\":\"string\"},{\"name\":\"body_3\",\"type\":\"string\"},{\"name\":\"body_4\",\"type\":\"string\"}]}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body_0\",\"type\":\"string\"},{\"name\":\"body_1\",\"type\":\"string\"},{\"name\":\"body_2\",\"type\":\"string\"},{\"name\":\"body_3\",\"type\":\"string\"},{\"name\":\"body_4\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "Redact",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body_0\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_1\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_2\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_3\",\"type\":[\"string\",\"null\"]},{\"name\":\"body_4\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "id": "GCS2",
+                "type": "batchsink",
+                "label": "GCS2",
+                "icon": "fa-plug"
+            }
+        ],
+        "schedule": "0 1 */1 * *",
+        "engine": "spark",
+        "numOfRecordsPreview": 100,
+        "rangeRecordsPreview": {
+            "min": 1,
+            "max": "5000"
+        },
+        "description": "dlp-pipeline",
+        "maxConcurrentRuns": 1
+    }
+}
